@@ -1,0 +1,247 @@
+[
+  {
+    "id": "c-1",
+    "category": "Fundamentals",
+    "question": "Walk me through ReAct. Why does it work?",
+    "answer": "ReAct interleaves Reasoning and Acting: model writes a thought, picks a tool, observes the result, repeats. It works because the observation grounds the next step in real data instead of letting the model hallucinate forward. Risk is verbosity and token cost since every loop adds context.",
+    "testing": "Whether you understand the loop primitive, not whether you memorized the paper."
+  },
+  {
+    "id": "c-2",
+    "category": "Fundamentals",
+    "question": "Plan-and-execute vs ReAct. When do you pick which?",
+    "answer": "Plan-and-execute writes the full plan upfront, then executes. ReAct decides each step in the loop. Plan-and-execute is cheaper when the task decomposes cleanly. ReAct wins when later steps genuinely depend on what earlier steps return (debugging, exploratory analysis).",
+    "testing": "Whether you justify architecture from task structure, not preference."
+  },
+  {
+    "id": "c-3",
+    "category": "Fundamentals",
+    "question": "What's reflection in an agent loop?",
+    "answer": "Reflection is when the agent reviews its own output or trajectory and decides whether to retry, refine, or accept. Two patterns: self-critique on the final answer, or step-level reflection that catches a bad tool call before the next step compounds the error. Roughly doubles cost.",
+    "testing": "Whether you've actually built one. Anyone who's shipped reflection knows the cost hit."
+  },
+  {
+    "id": "c-4",
+    "category": "Fundamentals",
+    "question": "Define 'tool use' without marketing fluff.",
+    "answer": "The model emits a structured call (JSON matching a schema), your runtime executes it, the result feeds the next model call. Function calling is the API mechanic; tool use is the pattern. The hard part is schema design and error handling.",
+    "testing": "Whether you separate the API feature from the design problem."
+  },
+  {
+    "id": "c-5",
+    "category": "Fundamentals",
+    "question": "Autonomous vs assisted agents. Where's the line?",
+    "answer": "Assisted agents wait for confirmation before consequential actions (sending email, writing to a database, spending money). Autonomous agents act inside a sandbox with budget and capability limits. Draw the line by blast radius: if a wrong action costs money, leaks data, or wakes someone up, gate it behind a human.",
+    "testing": "Whether you'll ship something reckless."
+  },
+  {
+    "id": "c-6",
+    "category": "Fundamentals",
+    "question": "Why do agents loop forever, and how do you stop it?",
+    "answer": "Three causes: model can't tell the task is done, a tool keeps returning an error the model can't handle, or the model fixates on a sub-goal. Stop it with hard step limits, budget caps (tokens and dollars), repeated-state detection, and an explicit termination check. Step cap is the cheapest defense.",
+    "testing": "Whether you've debugged a runaway loop at 3am."
+  },
+  {
+    "id": "c-7",
+    "category": "Fundamentals",
+    "question": "What's the simplest agent you'd build today?",
+    "answer": "A single-tool ReAct loop with a 5-step cap and structured logging. One tool, a system prompt that defines termination, a wrapper that records every step. Anything more without a reason is over-engineering.",
+    "testing": "Whether you reach for complexity or simplicity by default."
+  },
+  {
+    "id": "c-8",
+    "category": "Frameworks",
+    "question": "LangGraph vs CrewAI vs AutoGen vs custom. How do you choose?",
+    "answer": "LangGraph for explicit state machines and durable checkpoints. Best for long-running stateful agents. CrewAI for fast multi-agent prototypes with role-based orchestration. AutoGen for conversational multi-agent patterns. Custom if your loop is simple or constraints rule out a framework.",
+    "testing": "Whether you can defend a pick without bashing the others."
+  },
+  {
+    "id": "c-9",
+    "category": "Frameworks",
+    "question": "When would you build a custom agent loop?",
+    "answer": "When the loop is small enough that the framework adds more than it saves (~50 lines for single-tool ReAct). Also when you need control the framework doesn't expose: custom retry logic, non-standard state, specific observability hooks. Frameworks earn their weight on multi-agent and long-running stateful systems.",
+    "testing": "Whether you reach for frameworks reflexively."
+  },
+  {
+    "id": "c-10",
+    "category": "Frameworks",
+    "question": "Explain LangGraph's state graph model.",
+    "answer": "A directed graph: nodes are functions (LLM call, tool call, decision), edges are transitions. State is a typed dict that flows through nodes; each node returns updates that get merged. Edges can be conditional. Checkpoints persist state so you can resume after a crash.",
+    "testing": "Whether you've used it past the quickstart."
+  },
+  {
+    "id": "c-11",
+    "category": "Frameworks",
+    "question": "CrewAI uses roles. What's the tradeoff?",
+    "answer": "Roles give you fast prototyping (researcher + writer + critic in 20 lines) and a mental model that ports to non-engineers. Tradeoff: role boundaries are convention, not enforcement. Agents leak responsibilities and debugging gets murky. Fine for demos, painful in prod beyond a certain scale.",
+    "testing": "Whether you've felt the pain."
+  },
+  {
+    "id": "c-12",
+    "category": "Frameworks",
+    "question": "What's wrong with AutoGen's conversational pattern?",
+    "answer": "Nothing inherent, but conversation as orchestration means every message gets re-ingested by every agent, inflating token cost and latency. Works for research where the conversation IS the artifact. Bad fit for high-volume production where structured handoffs win.",
+    "testing": "Whether you understand the cost model, not just the feature list."
+  },
+  {
+    "id": "c-13",
+    "category": "Frameworks",
+    "question": "How do you handle framework lock-in?",
+    "answer": "Keep business logic (tools, prompts, eval harness) out of the framework. The framework wraps orchestration; everything else lives in your own modules. Switching costs a week, not a quarter. I migrated a prod agent from LangChain to LangGraph in 3 days because tools and prompts were portable.",
+    "testing": "Whether you've been burned by it."
+  },
+  {
+    "id": "c-14",
+    "category": "Frameworks",
+    "question": "Pick one framework you'd never use in prod. Why?",
+    "answer": "Any framework where the abstraction hides the prompt or the loop semantics. If I can't see what the model is being asked and what the runtime does between calls, I can't debug it. Rules out a few 'no-code agent' platforms regardless of demo polish.",
+    "testing": "Whether you have taste, not whether you trash-talk."
+  },
+  {
+    "id": "c-15",
+    "category": "Frameworks",
+    "question": "Message-passing vs shared-state architectures?",
+    "answer": "Shared state (one dict every node reads and writes) is simpler for short flows. Message passing (typed messages, no shared mutable state) scales better with many agents or distributed execution. Default to shared state until pain forces a move.",
+    "testing": "Whether you reach for distributed systems vocab without justification."
+  },
+  {
+    "id": "c-16",
+    "category": "Tool Use and Function Calling",
+    "question": "How do you design a tool schema the model will call correctly?",
+    "answer": "Three rules: descriptive parameter names, examples in the description, strict typing. If a parameter could be string or number, pick one and validate. Use enum for known values. Keep the schema small; models call short schemas more reliably than 15-parameter monsters.",
+    "testing": "Whether you've debugged a tool the model wouldn't call."
+  },
+  {
+    "id": "c-17",
+    "category": "Tool Use and Function Calling",
+    "question": "The model calls a tool and gets an error. What do you feed back?",
+    "answer": "Structured: error type, message, hint about valid input. Don't paste the stack trace. Don't swallow and return success. I return {\"error\": \"<type>\", \"message\": \"<short>\", \"hint\": \"<recovery>\"}.",
+    "testing": "Whether you understand error handling shapes the next loop iteration."
+  },
+  {
+    "id": "c-18",
+    "category": "Tool Use and Function Calling",
+    "question": "Parallel tool calls. When and how?",
+    "answer": "When the model emits multiple tool calls in one turn and the tools are independent, execute in parallel. Saves latency proportional to the longest call. Anthropic and OpenAI APIs support this natively. Don't parallelize across turns; that's concurrency, not parallelism.",
+    "testing": "Whether you know the API supports it and you've used it."
+  },
+  {
+    "id": "c-19",
+    "category": "Tool Use and Function Calling",
+    "question": "Tool results exceed the context window. What do you do?",
+    "answer": "Summarize before feeding back, store the full result in a side-channel the model can re-query, or paginate. Cheapest is summarization with a small model. Most accurate is full storage + re-query.",
+    "testing": "Whether you've hit this in production."
+  },
+  {
+    "id": "c-20",
+    "category": "Tool Use and Function Calling",
+    "question": "Structured outputs vs tool use. What's the difference?",
+    "answer": "Structured outputs constrain the final answer shape. Tool use lets the model call functions. Both use JSON schema, which is why they get confused. Use structured outputs when you want a typed response. Use tool use when you want the model to take actions and observe results.",
+    "testing": "Whether you can keep the two patterns straight."
+  },
+  {
+    "id": "c-21",
+    "category": "Tool Use and Function Calling",
+    "question": "The model is making up tool names. Why?",
+    "answer": "Three causes: tools weren't passed to that API call, the prompt mentions tools that aren't available, or the model's tool-use training is weak for that schema shape. Fix in that order. Usually it's the prompt promising capabilities you didn't wire up.",
+    "testing": "Whether you debug systematically or guess."
+  },
+  {
+    "id": "c-22",
+    "category": "Human-in-the-Loop and Checkpointing",
+    "question": "When do you interrupt for human approval?",
+    "answer": "Before any high blast radius action: spending money, external communication, writing to prod data, anything irreversible. Also when confidence on a critical decision drops below a threshold. Cheap actions (search, read, internal queries) don't need approval.",
+    "testing": "Whether you have judgment about blast radius."
+  },
+  {
+    "id": "c-23",
+    "category": "Human-in-the-Loop and Checkpointing",
+    "question": "How do you persist agent state for resumption?",
+    "answer": "Two layers: a checkpoint of full agent state (messages, intermediate results, tool history) and a separate event log for audit. Checkpoints go in a durable store keyed by run_id; LangGraph's checkpointer is the cleanest reference. Checkpoint after every node.",
+    "testing": "Whether you've thought about crash recovery."
+  },
+  {
+    "id": "c-24",
+    "category": "Human-in-the-Loop and Checkpointing",
+    "question": "The agent crashes mid-run. Walk me through resuming.",
+    "answer": "Load the latest checkpoint for the run_id, validate the state schema still matches, re-enter the loop at the next node. The tricky part is partial side effects: if the agent already sent the email, you don't want to send it twice. Idempotency keys on every outbound tool call solve this.",
+    "testing": "Whether you understand idempotency in agent context."
+  },
+  {
+    "id": "c-25",
+    "category": "Human-in-the-Loop and Checkpointing",
+    "question": "How do you let a human edit the agent's plan mid-run?",
+    "answer": "Pause at a checkpoint, surface state and proposed next step in a UI, let the human edit the plan or any intermediate result, resume with edited state. LangGraph's interrupt mechanism is built for this. The UX is harder than the engineering.",
+    "testing": "Whether you've thought about the human side."
+  },
+  {
+    "id": "c-26",
+    "category": "Human-in-the-Loop and Checkpointing",
+    "question": "What's the cost of checkpointing?",
+    "answer": "Storage and write latency. For most agents both are small relative to model cost, so default to checkpoint-everything and optimize on pressure. The trap is checkpointing large tool results inline; reference them by ID instead.",
+    "testing": "Whether you measure before optimizing."
+  },
+  {
+    "id": "c-27",
+    "category": "Eval and Observability",
+    "question": "How do you eval an agent vs a single-LLM app?",
+    "answer": "Single-LLM: input -> output, score the output. Agent: input -> trajectory -> output, score both the final answer AND the trajectory (which tools were called, in what order, whether intermediate steps were correct). Trajectory eval catches agents that get the right answer the wrong way.",
+    "testing": "Whether you understand the eval shape change."
+  },
+  {
+    "id": "c-28",
+    "category": "Eval and Observability",
+    "question": "What's a golden trajectory?",
+    "answer": "A reference trajectory for a known input: the ideal sequence of tool calls and intermediate results an expert (or your best agent) produces. Score new runs against the golden by step-level match. Building goldens is expensive but it's the only way to get reliable regression signal.",
+    "testing": "Whether you've actually run this kind of eval."
+  },
+  {
+    "id": "c-29",
+    "category": "Eval and Observability",
+    "question": "How do you track cost per task?",
+    "answer": "Instrument every model call and tool call with cost (input tokens * input price + output tokens * output price + tool overhead). Aggregate by run_id, then by task type. Dashboards: p50/p95 cost per task, cost per successful task (failures cost money too), trend over time.",
+    "testing": "Whether you've owned a cost line item."
+  },
+  {
+    "id": "c-30",
+    "category": "Eval and Observability",
+    "question": "LangSmith vs Helicone vs custom. What do you use?",
+    "answer": "LangSmith if you want trace UI and eval together (LangChain ecosystem). Helicone for a proxy-based approach across providers with minimal code change. Custom for compliance needs or integration with existing observability (Datadog, Honeycomb).",
+    "testing": "Whether you've shipped observability, not just installed it."
+  },
+  {
+    "id": "c-31",
+    "category": "Eval and Observability",
+    "question": "Agent passes eval in dev but fails in prod. Where do you look?",
+    "answer": "Distribution drift first: prod input distribution vs eval set? Then tool reliability (eval tools are mocks, prod tools fail differently). Then model version. Then long-tail prompts (eval covers happy path, prod has the weird stuff). Add prod sampling to your eval set every week.",
+    "testing": "Whether you've debugged the eval-prod gap before."
+  },
+  {
+    "id": "c-32",
+    "category": "Production System Design",
+    "question": "Design a research agent that handles 10k requests per day.",
+    "answer": "Queue + worker. API takes the request, drops a job on a queue (SQS, Redis), workers pick up jobs and run the agent loop. Each worker has a budget cap (tokens + wall time). Checkpointing to a durable store. Results back via webhook or polling. Scale workers horizontally on queue depth.",
+    "testing": "Whether you can do capacity math and pick the right primitives."
+  },
+  {
+    "id": "c-33",
+    "category": "Production System Design",
+    "question": "Multi-agent coordination. When do you actually need it?",
+    "answer": "Rarely. Most 'multi-agent' systems are one orchestrator that calls specialized sub-routines. True multi-agent makes sense when tasks decompose cleanly along agent boundaries, agents need different tool access (security), or you want to parallelize genuinely independent sub-problems.",
+    "testing": "Whether you'll over-engineer."
+  },
+  {
+    "id": "c-34",
+    "category": "Production System Design",
+    "question": "Latency budget for an interactive agent. How do you set it?",
+    "answer": "Budget = user tolerance, typically 5-15s for chat, 30s+ for batch. Decompose: model latency, tool latency, loop count (each loop is one round-trip plus tool calls). Set per-step budgets and fail fast when exceeded. If total exceeds tolerance, switch to streaming with progress updates.",
+    "testing": "Whether you understand latency as a budget, not a property."
+  },
+  {
+    "id": "c-35",
+    "category": "Production System Design",
+    "question": "How do you contain costs when an agent goes off the rails?",
+    "answer": "Five layers: hard step cap (e.g., 10 max), token budget per run, dollar budget per run, repeated-state detection (same tool call twice triggers a halt), circuit breakers on tools that error repeatedly. Plus alerting on cost-per-task p95 to catch drift before it becomes a bill.",
+    "testing": "Whether you've actually had a runaway and learned from it."
+  }
+]
