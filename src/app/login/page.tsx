@@ -4,12 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TerminalSquare, Loader2 } from "lucide-react";
+// Supabase client will be initialized inside the component
 import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function Login() {
   const router = useRouter();
@@ -24,6 +20,16 @@ export default function Login() {
     setLoading(true);
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        setError("Database connection is not configured.");
+        return;
+      }
+
+      const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,

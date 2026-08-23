@@ -4,12 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TerminalSquare, Loader2 } from "lucide-react";
+// Supabase client will be initialized inside the component
 import { createBrowserClient } from "@supabase/ssr";
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function Register() {
   const router = useRouter();
@@ -24,6 +20,16 @@ export default function Register() {
     setLoading(true);
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        setError("Database connection is not configured.");
+        return;
+      }
+
+      const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -38,20 +44,16 @@ export default function Register() {
               router.refresh();
               return;
            }
-           // Force bypass for dev as requested
-           document.cookie = "dev_bypass_auth=true; path=/";
-           router.push("/");
-           router.refresh();
+           setError("Rate limit reached. Please try logging in or wait a moment.");
            return;
         }
         setError(signUpError.message);
         return;
       }
 
-      // If signUp succeeds but no session is returned, email confirmation is turned on.
-      // We bypass this to satisfy "make register user access the home page".
       if (!data.session) {
-         document.cookie = "dev_bypass_auth=true; path=/";
+         setError("Please check your email to confirm your account.");
+         return;
       } else {
          // Initialize blank progress for the new user
          await fetch("/api/auth", {

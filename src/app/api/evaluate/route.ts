@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { ChatGroq } from '@langchain/groq';
+import { ChatMistralAI } from '@langchain/mistralai';
 import { cookies } from 'next/headers';
 import { getServerSupabase } from '@/lib/supabaseClient';
 
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
-const model = new ChatGroq({
-  apiKey: GROQ_API_KEY,
-  model: "llama-3.3-70b-versatile",
-  temperature: 0.1
-});
+// We initialize the model lazily inside the route handler to prevent
+// build-time crashes if the environment variable isn't present during 'npm run build'.
+function getModel() {
+  if (!MISTRAL_API_KEY) {
+    throw new Error("MISTRAL_API_KEY is not configured.");
+  }
+  return new ChatMistralAI({
+    apiKey: MISTRAL_API_KEY,
+    modelName: "mistral-large-latest",
+    temperature: 0.1
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,17 +27,25 @@ export async function POST(request: Request) {
     
     // Auth Check
     const cookieStore = await cookies();
-    let userId = 'dev-bypass-user';
     
-    if (cookieStore.get('dev_bypass_auth')?.value !== 'true') {
-       const supabase = getServerSupabase(cookieStore as any);
-       const { data: { user }, error } = await supabase.auth.getUser();
-       
-       if (error || !user) {
-         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-       }
-       userId = user.id;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: 'Database connection is not configured.' }, { status: 500 });
     }
+
+    const supabase = getServerSupabase(cookieStore as any);
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database connection is not configured.' }, { status: 500 });
+    }
+    
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.id;
     
     // Load question test cases
     const dbPath = path.join(process.cwd(), 'src', 'db', 'questions.json');
@@ -70,7 +85,7 @@ Return ONLY the raw JSON array. No markdown, no explanations outside the JSON.
     if (testCases.length === 0) {
       evaluation = [{ name: "Default Logic Check", passed: true, reason: "" }];
     } else {
-      const response = await model.invoke(prompt);
+      const response = await getModel().invoke(prompt);
       let content = String(response.content);
       
       // Clean JSON

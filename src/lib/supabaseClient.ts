@@ -13,6 +13,10 @@ export const getServerSupabase = (cookieStore: {
   getAll: () => { name: string; value: string }[];
   set: (name: string, value: string, options?: any) => void;
 }) => {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return null;
+  }
+  
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
