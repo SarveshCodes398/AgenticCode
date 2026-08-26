@@ -1,3 +1,15 @@
+Copyright © 2026 Sarvesh Mathur
+
+All rights reserved.
+
+This repository and its contents are proprietary to Sarvesh Mathur.
+No permission is granted to copy, modify, distribute, reproduce, publish,
+or use any part of this repository for commercial or non-commercial purposes
+without prior written permission from the copyright holder.
+
+Viewing this repository on GitHub does not grant any license or permission
+to use, copy, modify, distribute, or reproduce the source code.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
