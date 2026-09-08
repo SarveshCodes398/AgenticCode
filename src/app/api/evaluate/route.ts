@@ -22,6 +22,33 @@ function getModel() {
   });
 }
 
+function isRateLimitError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const status = typeof error === "object" && error !== null && "status" in error
+    ? (error as { status?: number }).status
+    : undefined;
+
+  return status === 429 || message.includes("429") || message.toLowerCase().includes("rate limit");
+}
+
+async function invokeModel(prompt: string) {
+  const model = getModel();
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await model.invoke(prompt);
+    } catch (error) {
+      if (!isRateLimitError(error) || attempt === 1) {
+        throw error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+
+  throw new Error("The evaluator could not be reached.");
+}
+
 export async function POST(request: Request) {
   try {
     const { questionId, code, timeTaken } = await request.json();
@@ -86,7 +113,7 @@ Return ONLY the raw JSON array. No markdown, no explanations outside the JSON.
     if (testCases.length === 0) {
       evaluation = [{ name: "Default Logic Check", passed: true, reason: "" }];
     } else {
-      const response = await getModel().invoke(prompt);
+      const response = await invokeModel(prompt);
       let content = String(response.content);
       
       // Clean JSON
@@ -149,8 +176,16 @@ Return ONLY the raw JSON array. No markdown, no explanations outside the JSON.
       details: evaluation
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json({ error: 'Failed to evaluate code. ' + error.message }, { status: 500 });
+    if (isRateLimitError(error)) {
+      return NextResponse.json(
+        { error: 'The evaluator is rate-limited. Please wait a minute and try again.' },
+        { status: 429 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : 'Unknown evaluation error';
+    return NextResponse.json({ error: 'Failed to evaluate code. ' + message }, { status: 500 });
   }
 }
