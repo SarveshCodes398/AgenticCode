@@ -11,6 +11,11 @@ type Question = {
   difficulty: string;
 };
 
+function getAcceptanceRate(id: string) {
+  const hash = Array.from(id).reduce((total, character) => total + character.charCodeAt(0), 0);
+  return (40 + (hash % 400) / 10).toFixed(1);
+}
+
 // Fetch questions server-side for instant load
 async function getQuestions() {
   const dbPath = path.join(process.cwd(), 'src', 'db', 'questions.json');
@@ -83,7 +88,7 @@ export default async function Home() {
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
-                      {(Math.random() * 40 + 40).toFixed(1)}%
+                      {getAcceptanceRate(q.id)}%
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <span className={`

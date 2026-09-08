@@ -7,6 +7,7 @@ import { getServerSupabase } from '@/lib/supabaseClient';
 
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL ?? "mistral-small-latest";
 
 // We initialize the model lazily inside the route handler to prevent
 // build-time crashes if the environment variable isn't present during 'npm run build'.
@@ -16,7 +17,7 @@ function getModel() {
   }
   return new ChatMistralAI({
     apiKey: MISTRAL_API_KEY,
-    modelName: "mistral-large-latest",
+    modelName: MISTRAL_MODEL,
     temperature: 0.1
   });
 }
