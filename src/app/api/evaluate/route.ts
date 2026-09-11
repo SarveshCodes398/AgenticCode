@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { ChatMistralAI } from '@langchain/mistralai';
+import { ChatGroq } from '@langchain/groq';
 import { cookies } from 'next/headers';
 import { getServerSupabase } from '@/lib/supabaseClient';
 
 
-const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
-const MISTRAL_MODEL = process.env.MISTRAL_MODEL ?? "mistral-small-latest";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
 
 // We initialize the model lazily inside the route handler to prevent
 // build-time crashes if the environment variable isn't present during 'npm run build'.
 function getModel() {
-  if (!MISTRAL_API_KEY) {
-    throw new Error("MISTRAL_API_KEY is not configured.");
+  if (!GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY is not configured.");
   }
-  return new ChatMistralAI({
-    apiKey: MISTRAL_API_KEY,
-    modelName: MISTRAL_MODEL,
+  return new ChatGroq({
+    apiKey: GROQ_API_KEY,
+    model: GROQ_MODEL,
     temperature: 0.1
   });
 }
