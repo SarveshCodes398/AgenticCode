@@ -1,23 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { randomUUID } from 'node:crypto';
-import { createBlankProgress } from '@/lib/session';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { createSessionToken, sessionCookieOptions, SESSION_COOKIE } from '@/lib/sessionToken';
 import { getUsersCollection, type UserRecord } from '@/lib/mongodb';
-
-function initializeProgress(userId: string, email: string) {
-  const progressPath = path.join(process.cwd(), 'src', 'db', 'progress.json');
-  let progressDb: Record<string, unknown> = {};
-  if (fs.existsSync(progressPath)) {
-    progressDb = JSON.parse(fs.readFileSync(progressPath, 'utf-8'));
-  }
-  if (!progressDb[userId]) {
-    progressDb[userId] = createBlankProgress(email);
-    fs.writeFileSync(progressPath, JSON.stringify(progressDb, null, 2));
-  }
-}
+import { initializeUserProgress } from '@/lib/progress';
 
 export async function POST(request: Request) {
   try {
@@ -55,7 +41,7 @@ export async function POST(request: Request) {
           }
           throw error;
         }
-        initializeProgress(user.id, email);
+        await initializeUserProgress(user.id, email);
       } else {
         user = await users.findOne({ email });
         if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -74,7 +60,7 @@ export async function POST(request: Request) {
       if (!userId || !email) {
         return NextResponse.json({ error: 'userId and email required' }, { status: 400 });
       }
-      initializeProgress(userId, email);
+      await initializeUserProgress(userId, email);
       return NextResponse.json({ success: true });
     }
 

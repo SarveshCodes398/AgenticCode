@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import fs from 'fs';
 import path from 'path';
 import { getSession } from "@/lib/session";
+import { getUserProgress } from "@/lib/progress";
 import ConceptQuestions from "@/components/ConceptQuestions";
 
 type Question = {
@@ -26,11 +27,9 @@ async function getQuestions() {
 
 // Fetch user progress server-side
 async function getProgress(userId: string) {
-  const dbPath = path.join(process.cwd(), 'src', 'db', 'progress.json');
-  if (!fs.existsSync(dbPath)) return null;
-  const data = fs.readFileSync(dbPath, 'utf-8');
-  const progressDb = JSON.parse(data);
-  return progressDb[userId];
+  const session = await getSession();
+  if (!session || session.userId !== userId) return null;
+  return await getUserProgress(userId, session.email ?? '');
 }
 
 export default async function Home() {

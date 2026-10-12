@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { ChatGroq } from '@langchain/groq';
 import { getSession } from '@/lib/session';
+import { recordSolvedSubmission } from '@/lib/progress';
 
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -115,42 +116,7 @@ Return ONLY the raw JSON array. No markdown, no explanations outside the JSON.
 
     // Update Progress if passed
     if (passed) {
-       const progressPath = path.join(process.cwd(), 'src', 'db', 'progress.json');
-       if (fs.existsSync(progressPath)) {
-          const progressDb = JSON.parse(fs.readFileSync(progressPath, 'utf-8'));
-          const userProgress = progressDb[userId];
-          
-          if (userProgress) {
-            const alreadySolved = userProgress.recentSubmissions.some((s: any) => s.id === questionId);
-            if (!alreadySolved) {
-                userProgress.recentSubmissions.unshift({
-                   id: questionId,
-                   title: question.title,
-                   time: "Just now",
-                   timeTaken: timeTaken || ""
-                });
-                if (userProgress.solved[question.difficulty] !== undefined) {
-                   userProgress.solved[question.difficulty]++;
-                }
-                
-                // Active days logic
-                const todayKey = new Date().toISOString().split('T')[0];
-                if (!userProgress.contributionGrid[todayKey]) {
-                   userProgress.activeDays++;
-                   userProgress.maxStreak = Math.max(userProgress.maxStreak, 1);
-                   
-                   // Very simple badge logic check (Mocking weekly for demo purposes)
-                   if (userProgress.activeDays === 7 && !userProgress.badges.includes("7-Day Warrior")) {
-                      userProgress.badges.push("7-Day Warrior");
-                   }
-                }
-                
-                userProgress.contributionGrid[todayKey] = (userProgress.contributionGrid[todayKey] || 0) + 1;
-                progressDb[userId] = userProgress;
-                fs.writeFileSync(progressPath, JSON.stringify(progressDb, null, 2));
-            }
-          }
-       }
+      await recordSolvedSubmission(userId, question, timeTaken || '');
     }
 
     return NextResponse.json({

@@ -1,6 +1,16 @@
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/sessionToken';
 
+export type ProgressData = {
+  user: string;
+  solved: { Easy: number; Medium: number; Hard: number };
+  activeDays: number;
+  maxStreak: number;
+  badges: string[];
+  recentSubmissions: { id: string; title: string; time: string; timeTaken: string }[];
+  contributionGrid: Record<string, number>;
+};
+
 export async function getSession() {
   try {
     const cookieStore = await cookies();
@@ -12,7 +22,7 @@ export async function getSession() {
   }
 }
 
-export function createBlankProgress(username: string) {
+export function createBlankProgress(username: string): ProgressData {
   return {
     user: username,
     solved: { Easy: 0, Medium: 0, Hard: 0 },

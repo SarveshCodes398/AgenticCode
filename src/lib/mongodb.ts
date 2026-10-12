@@ -11,7 +11,7 @@ export type UserRecord = {
   createdAt: Date;
 };
 
-export async function getUsersCollection() {
+export async function getDatabase() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error('MONGODB_URI is not configured.');
@@ -23,6 +23,10 @@ export async function getUsersCollection() {
   }
 
   const client = await globalForMongo.mongoClientPromise;
-  const database = client.db(process.env.MONGODB_DB ?? 'agentic_code');
+  return client.db(process.env.MONGODB_DB ?? 'agentic_code');
+}
+
+export async function getUsersCollection() {
+  const database = await getDatabase();
   return database.collection<UserRecord>('users');
 }

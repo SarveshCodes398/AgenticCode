@@ -1,8 +1,7 @@
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { UserCircle2, Trophy, Clock, Target, ShieldCheck } from "lucide-react";
-import fs from 'fs';
-import path from 'path';
 import { getSession } from "@/lib/session";
+import { getUserProgress } from "@/lib/progress";
 import { redirect } from 'next/navigation';
 
 export default async function ProfilePage() {
@@ -11,13 +10,7 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  const dbPath = path.join(process.cwd(), 'src', 'db', 'progress.json');
-  let progress: any = null;
-  if (fs.existsSync(dbPath)) {
-    const data = fs.readFileSync(dbPath, 'utf-8');
-    const db = JSON.parse(data);
-    progress = db[session.userId];
-  }
+  const progress = await getUserProgress(session.userId, session.email ?? '');
 
   if (!progress) {
     return <div className="p-8 text-center text-gray-400">Profile not found.</div>;
