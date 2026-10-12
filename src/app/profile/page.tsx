@@ -82,7 +82,7 @@ export default async function ProfilePage() {
             
             {/* Solved Problems */}
             <div className="rounded-xl border border-border bg-card p-6 flex items-center justify-between">
-               <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-[8px] border-border shadow-[0_0_20px_rgba(0,240,255,0.1)]">
+               <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-8 border-border shadow-[0_0_20px_rgba(0,240,255,0.1)]">
                  <div className="text-center">
                     <div className="text-2xl font-bold text-white">{totalSolved}</div>
                     <div className="text-[10px] text-success flex justify-center items-center gap-1"><ShieldCheck className="h-3 w-3" /> Solved</div>
@@ -111,12 +111,12 @@ export default async function ProfilePage() {
               <div className="flex gap-4">
                 {progress.badges.length === 0 ? <p className="text-sm text-gray-500">No badges yet. Solve problems to earn them!</p> : progress.badges.map((badge: string) => (
                   <div key={badge} className="flex flex-col items-center group cursor-pointer">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-neon-blue to-purple-600 flex items-center justify-center p-[2px] shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:scale-110 transition-transform">
+                    <div className="h-16 w-16 rounded-full bg-linear-to-br from-neon-blue to-purple-600 flex items-center justify-center p-0.5 shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:scale-110 transition-transform">
                       <div className="h-full w-full bg-card rounded-full flex items-center justify-center">
                          <Trophy className="h-8 w-8 text-neon-blue group-hover:text-white transition-colors" />
                       </div>
                     </div>
-                    <span className="mt-2 text-xs font-medium text-gray-300 text-center max-w-[80px]">{badge}</span>
+                    <span className="mt-2 text-xs font-medium text-gray-300 text-center max-w-20">{badge}</span>
                   </div>
                 ))}
               </div>

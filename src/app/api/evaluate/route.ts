@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { ChatGroq } from '@langchain/groq';
-import { cookies } from 'next/headers';
-import { getServerSupabase } from '@/lib/supabaseClient';
+import { getSession } from '@/lib/session';
 
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -54,26 +53,11 @@ export async function POST(request: Request) {
     const { questionId, code, timeTaken } = await request.json();
     
     // Auth Check
-    const cookieStore = await cookies();
-    
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Database connection is not configured.' }, { status: 500 });
-    }
-
-    const supabase = getServerSupabase(cookieStore as any);
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database connection is not configured.' }, { status: 500 });
-    }
-    
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = user.id;
+    const userId = session.userId;
     
     // Load question test cases
     const dbPath = path.join(process.cwd(), 'src', 'db', 'questions.json');

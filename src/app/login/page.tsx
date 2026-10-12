@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TerminalSquare, Loader2 } from "lucide-react";
-// Supabase client will be initialized inside the component
-import { createBrowserClient } from "@supabase/ssr";
 
 export default function Login() {
   const router = useRouter();
@@ -20,29 +18,20 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        setError("Database connection is not configured.");
-        return;
-      }
-
-      const supabase = createBrowserClient(supabaseUrl, supabaseKey);
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", email, password }),
       });
-
-      if (signInError) {
-        setError(signInError.message);
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || "Unable to sign in.");
         return;
       }
 
       router.push("/");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);

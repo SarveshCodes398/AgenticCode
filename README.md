@@ -28,6 +28,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## MongoDB Authentication
+
+Copy `.env.example` to `.env`, then set `MONGODB_URI` to your MongoDB Atlas connection string and `MONGODB_DB` to the database name you want to use. Set `SESSION_SECRET` to a random value of at least 32 characters, and make sure your Atlas network access rules allow the app to connect. User email addresses and salted password hashes are stored in the `users` collection; sessions are signed and stored in an HTTP-only cookie.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

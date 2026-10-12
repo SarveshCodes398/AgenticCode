@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TerminalSquare, Loader2 } from "lucide-react";
-// Supabase client will be initialized inside the component
-import { createBrowserClient } from "@supabase/ssr";
 
 export default function Register() {
   const router = useRouter();
@@ -20,53 +18,20 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        setError("Database connection is not configured.");
-        return;
-      }
-
-      const supabase = createBrowserClient(supabaseUrl, supabaseKey);
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "register", email, password }),
       });
-
-      if (signUpError) {
-        if (signUpError.message.toLowerCase().includes('rate limit')) {
-           // Try to login instead just in case
-           const loginAttempt = await supabase.auth.signInWithPassword({ email, password });
-           if (!loginAttempt.error && loginAttempt.data.session) {
-              router.push("/");
-              router.refresh();
-              return;
-           }
-           setError("Rate limit reached. Please try logging in or wait a moment.");
-           return;
-        }
-        setError(signUpError.message);
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || "Unable to create account.");
         return;
       }
 
-      if (!data.session) {
-         setError("Please check your email to confirm your account.");
-         return;
-      } else {
-         // Initialize blank progress for the new user
-         await fetch("/api/auth", {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ action: "init-progress", userId: data.user?.id, email }),
-         });
-      }
-
-      // Redirect directly to home page
       router.push("/");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);

@@ -1,23 +1,13 @@
 import { cookies } from 'next/headers';
-import { getServerSupabase } from '@/lib/supabaseClient';
+import { SESSION_COOKIE, verifySessionToken } from '@/lib/sessionToken';
 
 export async function getSession() {
   try {
     const cookieStore = await cookies();
-    
-    // Check if env vars are configured before trying to use Supabase
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || (!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
-      return null;
-    }
-    
-    const supabase = getServerSupabase(cookieStore as any);
-    if (!supabase) return null;
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) return null;
-    return { userId: user.id, email: user.email };
-  } catch (error) {
-    // If Supabase fails for any reason (e.g., misconfiguration), default to logged out
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    if (!token) return null;
+    return await verifySessionToken(token);
+  } catch {
     return null;
   }
 }
